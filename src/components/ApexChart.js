@@ -1,5 +1,4 @@
 import React,{Component} from "react";
-//import ReactDOM from "react-dom";
 import Chart from "react-apexcharts";
 
  class ApexChart extends React.Component {
@@ -37,25 +36,35 @@ import Chart from "react-apexcharts";
       }],
       options: {
         chart: {
+          zoom: {
+            enabled: false,
+            type: 'xy',  
+            autoScaleXaxis: false,  
+            autoScaleYaxis: false  
+          },
           height: 350,
           type: 'scatter',
-          zoom: {
-            //autoScaleXaxis: true,
-            //autoScaleYaxis: true,
-            enabled: false,
-            type: 'xy'
-          }
         },
         xaxis: {
-          tickAmount: 10,
           labels: {
             formatter: function(val) {
               return parseFloat(val).toFixed(1)
             }
-          }
+          },
+          tickAmount: 10,
+          tickPlacement: 'on',
+          min: 0,
+          max: 1,
+          range: undefined,
+          floating: false,
         },
         yaxis: {
-          tickAmount: 7
+          tickAmount: 10,
+          tickPlacement: 'on',
+          min: 0,
+          max: 1,
+          range: undefined,
+          floating: false,
         }
       },
     
@@ -77,36 +86,35 @@ import Chart from "react-apexcharts";
   }
 
   generatePoint(){
+    var size=parseFloat(this.temporal)*parseFloat(this.nontemporal);
+    //if(size<200) size=200;
+    //if(size>300) size=300;
     if(this.color==="blue")
     {
       this.datablue.push([parseFloat(this.temporal),parseFloat(this.nontemporal),
-      parseFloat(this.temporal)*parseFloat(this.nontemporal)*200,{
-      min: 0,
-      max: 1}]);
+      size
+      ]);
     }
 
     if(this.color==="green")
     {
       this.datagreen.push([parseFloat(this.temporal),parseFloat(this.nontemporal),
-      parseFloat(this.temporal)*parseFloat(this.nontemporal)*200,{
-      min: 0,
-      max: 1}]);
+      size
+      ]);
     }
 
     if(this.color==="yellow")
     {
       this.datayellow.push([parseFloat(this.temporal),parseFloat(this.nontemporal),
-      parseFloat(this.temporal)*parseFloat(this.nontemporal)*200,{
-      min: 0,
-      max: 1}]);
+      size
+      ]);
     }
 
     if(this.color==="red")
     {
       this.datared.push([parseFloat(this.temporal),parseFloat(this.nontemporal),
-      parseFloat(this.temporal)*parseFloat(this.nontemporal)*200,{
-      min: 0,
-      max: 1}]);
+      size
+      ]);
     }
 
     this.setState({
@@ -130,29 +138,40 @@ import Chart from "react-apexcharts";
       }],
       options: {
         chart: {
+          zoom: {
+            enabled: false,
+            type: 'xy',  
+            autoScaleXaxis: false,  
+            autoScaleYaxis: false  
+          },
           height: 350,
           type: 'scatter',
-          zoom: {
-            //autoScaleXaxis: true,
-            //autoScaleYaxis: true,
-            enabled: false,
-            type: 'xy'
-          }
         },
         xaxis: {
-          tickAmount: 10,
           labels: {
             formatter: function(val) {
               return parseFloat(val).toFixed(1)
             }
-          }
+          },
+          tickAmount: 10, 
+          tickPlacement: 'on',
+          min: 0,
+          max: 1,
+          range: undefined,
+          floating: false,
         },
         yaxis: {
-          tickAmount: 7
+          tickAmount: 10,
+          tickPlacement: 'on',
+          min: 0,
+          max: 1,
+          range: undefined,
+          floating: false,
         }
       },
     
-  });
+    
+    });
   }
 
   render() {
@@ -179,9 +198,5 @@ import Chart from "react-apexcharts";
     );
   }
 }
-
-//const domContainer = document.querySelector('#app');
-
-//ReactDOM.render(React.createElement(ApexChart), domContainer);
 
 export default ApexChart;
