@@ -8,21 +8,23 @@ class GoogleChart extends React.Component {
       super(props);
     this.temporal=null;
     this.nontemporal=null;
-    this.color="#000000";
-    this.colorarr = ['#000000'];
-    this.colorNumberGroup=[1];
-    this.Name=null;
+    this.color="#0000FF";
+    this.colorarr = ['#0000FF'];
+    this.Namearr=[];
+    this.Name='';
+    //this.minsize=0;
+    //this.maxsize=10;
     this.onTemporalChange=this.onTemporalChange.bind(this);
     this.onNonTemporalChange=this.onNonTemporalChange.bind(this);
     this.onColorChange=this.onColorChange.bind(this);
     this.onNameChange=this.onNameChange.bind(this);
     this.FirstTime = true;
-    this.oldcolor="#000000";
-    this.oldName=null;
+    this.oldcolor="#0000FF";
+    this.oldName='';
     this.selected=null;
     this.data=[
-       ['Name', 'Temporal', 'NonTemporal', 'Color', 'Size'],
-       ['',0,0,"#000000",0]
+       ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
+       [null,0,0,null,0],
       ];
     this.options = {
         title:'',
@@ -30,7 +32,7 @@ class GoogleChart extends React.Component {
         vAxis: { title: 'NonTemporal' ,minValue: 0, maxValue: 1 },
         bubble: { textStyle: { fontSize: 11 } },
         colors: this.colorarr,
-        
+        sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
     }
 }   
 
@@ -51,62 +53,68 @@ onTemporalChange(e){
   }
 
   generatePoint(){
-    if(this.temporal>1 || this.temporal<0 || this.nontemporal>1 || this.nontemporal<0) return;
+    if(this.temporal>1 || this.temporal<0 || this.nontemporal>1 || this.nontemporal<0)
+    {
+      alert('Point not in range! try again');
+      return;
+    }
+    if(this.Name=='' || this.Name=='Name') {
+      alert('forbiden name! try again');
+      return;
+    }
+    for(var i=0;i<this.data.length;i++) //check if name already exists
+    {
+      if(this.data[i][0]==this.Name) 
+      {
+        alert('name already exists! try again');
+        return;
+      }
+    }
     
     if(this.FirstTime==true)  {
       this.data = [
-        ['Name', 'Temporal', 'NonTemporal', 'Color', 'Size']
+        ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
     ];
     this.colorarr = [this.color];
-    this.colorNumberGroup = [1];
+    this.Namearr=[this.Name];
     this.FirstTime=false;
     }
-    else if (this.colorarr.includes(this.color)==false) {
-      this.colorarr.push(this.color);
-      this.colorNumberGroup.push(1);
-    }
     else {
-      this.colorNumberGroup[this.colorarr.indexOf(this.color)] += 1;
-    } 
-   
+      this.colorarr.push(this.color);
+      this.Namearr.push(this.Name);
+    }
+    
     var size=parseFloat(this.temporal)*parseFloat(this.nontemporal);
+    
+    this.data.push([this.Name,parseFloat(this.temporal),parseFloat(this.nontemporal),this.Name,size]);
 
-    this.data.push([this.Name,parseFloat(this.temporal),parseFloat(this.nontemporal),this.color,size]);
-
+    //if(this.maxsize<size*50) this.maxsize=size*50;
+    //if(this.minsize>size*50) this.minsize=size*50;
     this.options = {
         title:'',
         hAxis: { title: 'Temporal' ,minValue: 0, maxValue: 1},
         vAxis: { title: 'NonTemporal' ,minValue: 0, maxValue: 1 },
         bubble: { textStyle: { fontSize: 11 } },
         colors: this.colorarr,
-        
+        //sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
+
     }
     this.setState({chartData:this.data});
 }
 
 handleRemove() {
   if(this.selected != null) {
-    if(this.data.length >2 ) {
-      if (this.colorNumberGroup[this.colorarr.indexOf(this.data[this.selected[0].row+1][3])] > 1){
-        this.colorNumberGroup[this.colorarr.indexOf(this.data[this.selected[0].row+1][3])] -= 1;
-      }
-      else {
-        this.colorNumberGroup.splice(this.colorarr.indexOf(this.data[this.selected[0].row+1][3]),1);
-        this.colorarr.splice(this.colorarr.indexOf(this.data[this.selected[0].row+1][3]),1);
-      }
+    if(this.data.length >2 ) { 
+      this.colorarr.splice(this.selected[0].row,1);
+      this.Namearr.splice(this.selected[0].row,1);
       this.data.splice(this.selected[0].row+1,1);
-      this.colorarr = [];
-      for(var i=1;i<this.data.length;i++) {
-         if( this.colorarr.includes(this.data[i][3]) == false) this.colorarr.push(this.data[i][3]);
-      }
     }
     else 
     {
-      this.colorNumberGroup=[1];
-      this.colorarr = ['#000000'];
+      this.colorarr = ['#0000FF'];
       this.data = [
-        ['Name', 'Temporal', 'NonTemporal', 'Color', 'Size'],
-        ["",0,0,'#000000',0]
+        ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
+        [null,0,0,null,0],
       ];
       this.FirstTime = true;
       
@@ -117,7 +125,8 @@ handleRemove() {
       vAxis: { title: 'NonTemporal' ,minValue: 0, maxValue: 1 },
       bubble: { textStyle: { fontSize: 11 } },
       colors: this.colorarr,
-      
+      //sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
+
     }
     this.setState({chartData:this.data});
   }
@@ -125,14 +134,29 @@ handleRemove() {
 
 handleNameChange(){
   if(this.selected != null) {
+    if(this.Name=='' || this.Name=='Name') {
+      alert('forbiden name! try again');
+      return;
+    }
+    for(var i=0;i<this.data.length;i++) //check if name already exists
+    {
+      if(this.data[i][0]==this.Name) 
+      {
+        alert('name already exists! try again');
+        return;
+      }
+    }
     this.data[this.selected[0].row+1][0]=this.Name;
+    this.data[this.selected[0].row+1][3]=this.Name;
+    this.Name=this.oldName;
     this.options = {
       title:'',
       hAxis: { title: 'Temporal' ,minValue: 0, maxValue: 1},
       vAxis: { title: 'NonTemporal' ,minValue: 0, maxValue: 1 },
       bubble: { textStyle: { fontSize: 11 } },
       colors: this.colorarr,
-      
+      //sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
+
     }
     this.setState({chartData:this.data});
   }
@@ -142,30 +166,21 @@ handleNameChange(){
 
 handleColorChange(){
   if(this.selected != null) {
-    this.Name=this.data[this.selected[0].row+1][0];
+    if(this.Name!=null) this.Name=this.data[this.selected[0].row+1][0];
     this.temporal=this.data[this.selected[0].row+1][1];
     this.nontemporal=this.data[this.selected[0].row+1][2];
-    if(this.data.length >2 ) {
-      if (this.colorNumberGroup[this.colorarr.indexOf(this.data[this.selected[0].row+1][3])] > 1){
-        this.colorNumberGroup[this.colorarr.indexOf(this.data[this.selected[0].row+1][3])] -= 1;
-      }
-      else {
-        this.colorNumberGroup.splice(this.colorarr.indexOf(this.data[this.selected[0].row+1][3]),1);
-        this.colorarr.splice(this.colorarr.indexOf(this.data[this.selected[0].row+1][3]),1);
-      }
+    if(this.data.length >2 ) { 
+      this.colorarr.splice(this.selected[0].row,1);
+      this.Namearr.splice(this.selected[0].row,1);
       this.data.splice(this.selected[0].row+1,1);
-      this.colorarr = [];
-      for(var i=1;i<this.data.length;i++) {
-         if( this.colorarr.includes(this.data[i][3]) == false) this.colorarr.push(this.data[i][3]);
-      }
     }
     else 
     {
       this.colorNumberGroup=[1];
-      this.colorarr = ['#000000'];
+      this.colorarr = ['#0000FF'];
       this.data = [
-        ['Name', 'Temporal', 'NonTemporal', 'Color', 'Size'],
-        ["",0,0,'#000000',0]
+        ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
+        [null,0,0,null,0],
       ];
       this.FirstTime = true;
       
@@ -173,6 +188,7 @@ handleColorChange(){
 
     this.generatePoint();
     this.data[this.data.length-1][0]=this.Name;
+    this.data[this.data.length-1][3]=this.Name;
     this.color=this.oldcolor;
     this.options = {
       title:'',
@@ -180,14 +196,15 @@ handleColorChange(){
       vAxis: { title: 'NonTemporal' ,minValue: 0, maxValue: 1 },
       bubble: { textStyle: { fontSize: 11 } },
       colors: this.colorarr,
-      
+      //sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
+
     }
     this.setState({chartData:this.data});
   }
 }
 
-
 openDialog(){ 
+  this.color='#0000FF';
   ModalManager.open(
   <div>
           <Modal
@@ -196,13 +213,24 @@ openDialog(){
              >
              <input type="string" onChange={this.oldName=this.Name,this.onNameChange} />
              <button className='btn' onClick={()=>{this.handleNameChange();ModalManager.close();}}>Change Name</button>
-             <input type="color" onChange={this.oldcolor=this.color,this.onColorChange} />
+             <select onChange={this.oldcolor=this.color,this.onColorChange}> 
+             <option value="#0000FF">Blue</option>
+             <option value="#00FF00">Green</option>
+             <option value="#FFFF00">Yellow</option>
+             <option value="#FF0000">Red</option>
+             </select> 
              <button className='btn' onClick={()=>{this.handleColorChange();ModalManager.close();}}>Change Color</button>
              <button className='btn' onClick={()=>{this.handleRemove();ModalManager.close();}}>Remove</button>
              <button className='btn' onClick={ModalManager.close}>Cancel</button>
           </Modal>
   </div>
   );
+  Array.from(document.querySelectorAll("input")).forEach(
+    input => (input.value = "")
+  );
+  this.setState({
+    itemvalues: [{}]
+  });
 }
 
 render(){
@@ -215,11 +243,16 @@ return(
       <label> Enter Non-Temporal Complexity:</label>
       <input type={Float32Array} onChange={this.onNonTemporalChange} min='0' max='1' />
       <label> Choose Complexity Color:</label>
-      <input type="color" onChange={this.onColorChange} />
+      <select onChange={this.onColorChange}>
+      <option value="#0000FF">Blue</option>
+      <option value="#00FF00">Green</option>
+      <option value="#FFFF00">Yellow</option>
+      <option value="#FF0000">Red</option>
+      </select> 
       <button className='btn' onClick={() => this.generatePoint()}>Save</button>
         <div id="chart">
           <Chart
-  width={'1500px'}
+  width={'750px'}
   height={'600px'}
   chartType="BubbleChart"
   loader={<div>Loading Chart</div>}
