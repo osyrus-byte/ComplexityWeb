@@ -2,6 +2,29 @@ import { render } from "@testing-library/react";
 import React,{Component} from "react";
 import Chart from "react-google-charts";
 import { Modal,ModalManager,Effect} from 'react-dynamic-modal';
+import DataTable from "react-data-table-component";
+//import SortIcon from "@material-ui/icons/ArrowDownward" //sortIcon={<SortIcon/>}
+
+const columns = [
+  {id : 1,
+  name: "name",
+  selector: (row) => row.name,
+  sortable : true,
+  reorder : true
+},
+{id : 2,
+  name: "temporal",
+  selector: (row) => row.temporal,
+  sortable : true,
+  reorder : true
+},
+{id : 3,
+  name: "nontemporal",
+  selector: (row) => row.nontemporal,
+  sortable : true,
+  reorder : true
+}
+]
 
 class GoogleChart extends React.Component {
     constructor(props) {
@@ -34,6 +57,7 @@ class GoogleChart extends React.Component {
         colors: this.colorarr,
         sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
     }
+    this.queryData = [{"name":"bal","temporal":4,"nontemporal":5},{"name":"bhj","temporal":9,"nontemporal":6}];
 }   
 
 onTemporalChange(e){
@@ -233,6 +257,16 @@ openDialog(){
   });
 }
 
+async get_Points(){
+  await fetch("http://localhost/getpoints")
+  //.then(response => { response.text();})
+  //.then(text => {console.log(text);});
+  .then(response => {return response.json();})
+  .then(responseData => { this.queryData = responseData.map((i) => ({"name":i[0],"temporal":i[1],"nontemporal":i[2]})); return responseData;}) //{name:"bal",temporal:4,nontemporal:5}
+  .catch(err => {alert(err);});
+  this.setState({data:this.queryData});
+}
+
 render(){
 return(
     <div>
@@ -250,6 +284,8 @@ return(
       <option value="#FF0000">Red</option>
       </select> 
       <button className='btn' onClick={() => this.generatePoint()}>Save</button>
+      <button className='btn' onClick={() => this.get_Points()}>Get Points</button>
+
         <div id="chart">
           <Chart
   width={'750px'}
@@ -272,6 +308,7 @@ return(
 ]}
 
 />
+<DataTable title="Points From DB" columns={columns} data={this.queryData} defaultSirtFieldID={1} pagination selectebleRows /> 
         </div>
         <div id="html-dist"></div>
       </div>
