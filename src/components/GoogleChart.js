@@ -258,7 +258,7 @@ openDialog(){
 }
 
 async get_Points(){
-  await fetch("http://localhost/getpoints")
+  await fetch("http://ec2-3-143-22-136.us-east-2.compute.amazonaws.com:3500/getpoints")
   //.then(response => { response.text();})
   //.then(text => {console.log(text);});
   .then(response => {return response.json();})
