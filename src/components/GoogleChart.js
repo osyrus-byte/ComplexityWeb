@@ -7,21 +7,31 @@ import DataTable from "react-data-table-component";
 
 const columns = [
   {id : 1,
-  name: "name",
-  selector: (row) => row.name,
+  name: "Trace",
+  selector: (row) => row.Trace,
   sortable : true,
+  maxWidth: '200px',
   reorder : true
 },
 {id : 2,
-  name: "temporal",
-  selector: (row) => row.temporal,
+  name: "Temporal",
+  selector: (row) => row.Temporal,
   sortable : true,
+  maxWidth: '200px',
   reorder : true
 },
 {id : 3,
-  name: "nontemporal",
-  selector: (row) => row.nontemporal,
+  name: "Nontemporal",
+  selector: (row) => row.Nontemporal,
   sortable : true,
+  maxWidth: '200px',
+  reorder : true
+},
+{id : 4,
+  name: "Color",
+  selector: (row) => row.Color,
+  sortable : true,
+  maxWidth: '200px',
   reorder : true
 }
 ]
@@ -45,6 +55,7 @@ class GoogleChart extends React.Component {
     this.oldcolor="#0000FF";
     this.oldName='';
     this.selected=null;
+    this.RowsSelection = [];
     this.data=[
        ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
        [null,0,0,null,0],
@@ -57,8 +68,8 @@ class GoogleChart extends React.Component {
         colors: this.colorarr,
         sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
     }
-    this.queryData = [{"name":"bal","temporal":4,"nontemporal":5},{"name":"bhj","temporal":9,"nontemporal":6}];
-}   
+    this.queryData = [{"Trace":"bal","Temporal":4,"Nontemporal":5,"Color":"#0000FF"},{"Trace":"bhj","Temporal":9,"Nontemporal":6,"Color":"#FF0000"}];
+}  
 
 onTemporalChange(e){
     this.temporal = e.target.value;
@@ -262,9 +273,66 @@ async get_Points(){
   //.then(response => { response.text();})
   //.then(text => {console.log(text);});
   .then(response => {return response.json();})
-  .then(responseData => { this.queryData = responseData.map((i) => ({"name":i[0],"temporal":i[1],"nontemporal":i[2]})); return responseData;}) //{name:"bal",temporal:4,nontemporal:5}
+  .then(responseData => { this.queryData = responseData.map((i) => ({"Trace":i[0],"Temporal":i[1],"Nontemporal":i[2],"Color":i[3]})); return responseData;}) //{Trace:"bal",Temporal:4,Nontemporal:5}
   .catch(err => {alert(err);});
   this.setState({data:this.queryData});
+}
+
+handleAddFromTable(){
+    for(var i=0;i<this.RowsSelection.length;i++)
+    {
+      this.Name=this.RowsSelection[i]["Trace"];
+      this.temporal=this.RowsSelection[i]["Temporal"];
+      this.nontemporal=this.RowsSelection[i]["Nontemporal"];
+      this.color=this.RowsSelection[i]["Color"];
+      this.generatePoint();
+    }
+}
+
+RemovePoint(name) {
+  var pointindex = null; //since trace name is unique
+  for(var i = 1;i<this.data.length;i++){
+    if(this.data[i][0]==name) {
+      pointindex = i;
+      break;
+    }
+  }
+  if(pointindex == null) {
+    alert("Trace Not Found!");
+    return;
+  }
+  if(this.data.length >2) { 
+    this.colorarr.splice(pointindex-1,1);
+    this.Namearr.splice(pointindex-1,1);
+    this.data.splice(pointindex,1);
+  }
+  else 
+  {
+    this.colorarr = ['#0000FF'];
+    this.data = [
+      ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
+      [null,0,0,null,0],
+    ];
+    this.FirstTime = true;
+    
+  }
+  this.options = {
+    title:'',
+    hAxis: { title: 'Temporal' ,minValue: 0, maxValue: 1},
+    vAxis: { title: 'NonTemporal' ,minValue: 0, maxValue: 1 },
+    bubble: { textStyle: { fontSize: 11 } },
+    colors: this.colorarr,
+    //sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
+
+  }
+  this.setState({chartData:this.data});
+}     
+
+handleRemoveFromMap(){
+  for(var i=0;i<this.RowsSelection.length;i++)
+  {
+      this.RemovePoint(this.RowsSelection[i]["Trace"]);
+  }
 }
 
 render(){
@@ -308,7 +376,9 @@ return(
 ]}
 
 />
-<DataTable title="Points From DB" columns={columns} data={this.queryData} defaultSirtFieldID={1} pagination selectebleRows /> 
+<button className='btn' onClick={() => this.handleAddFromTable()}>ADD TO MAP</button>
+<button className='btn' onClick={() => this.handleRemoveFromMap()}>REMOVE FROM MAP</button>
+<DataTable title="Points From DB" columns={columns} data={this.queryData} defaultSirtFieldID={1} pagination selectableRows onSelectedRowsChange={({ selectedRows }) => {this.RowsSelection=selectedRows;}}/> 
         </div>
         <div id="html-dist"></div>
       </div>
