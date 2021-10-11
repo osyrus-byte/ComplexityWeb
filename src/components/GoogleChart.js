@@ -68,7 +68,7 @@ class GoogleChart extends React.Component {
         colors: this.colorarr,
         sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
     }
-    this.queryData = [{"Trace":"bal","Temporal":4,"Nontemporal":5,"Color":"#0000FF"},{"Trace":"bhj","Temporal":9,"Nontemporal":6,"Color":"#FF0000"}];
+    this.queryData = [];//{"Trace":"bal","Temporal":4,"Nontemporal":5,"Color":"#0000FF"},{"Trace":"bhj","Temporal":9,"Nontemporal":6,"Color":"#FF0000"}];
 }  
 
 onTemporalChange(e){
@@ -279,6 +279,7 @@ async get_Points(){
 }
 
 handleAddFromTable(){
+    this.oldcolor=this.color;
     for(var i=0;i<this.RowsSelection.length;i++)
     {
       this.Name=this.RowsSelection[i]["Trace"];
@@ -287,6 +288,7 @@ handleAddFromTable(){
       this.color=this.RowsSelection[i]["Color"];
       this.generatePoint();
     }
+    this.color=this.oldcolor;
 }
 
 RemovePoint(name) {
