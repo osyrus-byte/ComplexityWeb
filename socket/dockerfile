@@ -1,0 +1,17 @@
+FROM python:3.8-slim-buster
+WORKDIR /usr/app
+COPY ./ /usr/app
+
+RUN apt-get update
+RUN apt-get install -y libpq-dev python-dev gcc python-setuptools
+
+RUN pip install flask
+RUN pip install flask_cors
+RUN pip install gevent
+RUN pip install flask_sockets
+RUN pip install redis
+RUN pip install -I Werkzeug==1.0.1
+
+
+EXPOSE 8080
+CMD ["python3","pubsub_server.py"]

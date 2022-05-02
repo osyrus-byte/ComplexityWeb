@@ -1,0 +1,21 @@
+FROM python:3.8-slim-buster
+WORKDIR /usr/app
+COPY ./ /usr/app
+
+RUN apt-get update
+RUN apt-get install -y libpq-dev python-dev gcc python-setuptools
+RUN apt-get install -y p7zip-full
+
+RUN pip install flask
+RUN pip install flask_cors
+RUN pip install psycopg2
+RUN pip install pymysql
+RUN pip install cryptography
+RUN pip install numpy
+RUN pip install pickle-mixin
+RUN pip install minio
+RUN pip install redis
+
+
+EXPOSE 3500
+CMD ["python3","main.py"]

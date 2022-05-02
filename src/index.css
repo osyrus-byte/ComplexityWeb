@@ -8,7 +8,11 @@ body {
   background-color: #ffffff;
 }
 
-h1, h2 {
+h1{
+  color: #000000;
+}
+
+h2{
   color: #00b818;
 }
 
@@ -43,6 +47,59 @@ input{
 }
 
 .btn--alt:hover {
+  background-color: #6fd9f3;
+}
+
+.btn_circle {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 50%;
+  background-color: rgb(219, 239, 245);
+  color: rgb(1, 180, 46);
+  border: 1px solid white;
+  margin: 0 1rem;
+}
+
+.btn_circle:hover {
+  background-color: rgb(219, 239, 245);
+  border-color: white;
+  color: #0123e7;
+}
+
+.btn_circle--alt {
+  background-color: transparent;
+  color: #0123e7;
+}
+
+.btn_circle--alt:hover {
+  background-color: #6fd9f3;
+}
+
+.fileInput {
+  font: inherit;
+  padding: 0.5rem 1.5rem;
+  display: none;
+  cursor: pointer;
+  border-radius: 4px;
+  background-color: rgb(219, 239, 245);
+  color: rgb(1, 180, 46);
+  border: 1px solid white;
+  margin: 0 1rem;
+}
+
+.fileInput:hover {
+  background-color: rgb(219, 239, 245);
+  border-color: white;
+  color: #0123e7;
+}
+
+.fileInput--alt {
+  background-color: transparent;
+  color: #0123e7;
+}
+
+.fileInput--alt:hover {
   background-color: #6fd9f3;
 }
 
