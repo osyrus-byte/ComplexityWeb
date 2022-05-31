@@ -5,6 +5,7 @@ import json
 
 import pg_query
 import mysql_query
+import mysql_delete
 import dataloader
 
 env = json.load(open("enviroment.config.json", 'r'))
@@ -23,6 +24,11 @@ def postgresql_getpoints():
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def mysql_getpoints():
     return flask.jsonify(mysql_query.get_points())
+
+@app.route("/mysql_deletepoint",methods=['GET','POST','OPTIONS'])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+def mysql_deletepoint():
+    return flask.jsonify(mysql_delete.delete_point(json.loads(request.get_data().decode('utf-8'))))
 
 @app.route("/data_upload",methods=['GET','POST','OPTIONS'])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])

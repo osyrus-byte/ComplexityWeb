@@ -1,4 +1,6 @@
 import random
+import time
+
 import numpy as np
 import hashlib
 import subprocess
@@ -8,17 +10,39 @@ import redis
 import binaryfunctions as bin
 import json
 
-'''
-#an example of data received from the frontend
-data = [{"seq_nr": 0, "srcip": 1024, "dstip": 9926}, {"seq_nr": 1, "srcip": 1551515, "dstip": 809021},
-        {"seq_nr": 2, "srcip": 17605, "dstip": 35506}, {"seq_nr": 3, "srcip": 3300556, "dstip": 200048},
-        {"seq_nr": 4, "srcip": 9926, "dstip": 1024}, {"seq_nr": 5, "srcip": 1024, "dstip": 9926},
-        {"seq_nr": 6, "srcip": 35506, "dstip": 17605}, {"seq_nr": 7, "srcip": 809021, "dstip": 1551515},
-        ]
-'''
+
+def data_parser(data):
+    new_data = []
+    for entry in data.split("\n"):
+        new_data.append(entry)
+    return new_data
 
 
 def remove_outliers(data):  # function to remove outliers from the data
+    pair_list = []
+    to_remove = []
+
+    # num_of_rows_to_print=10
+    # print("csv file data:\n",text[:num_of_rows_to_print],flush=True, file=sys.stdout)
+
+    for entry in data:  # extracting data to list of sources and destinations inorder
+        pair_list.append(entry.split(",")[1] + "," + entry.split(",")[2])
+
+    (pair_unique, pair_counts) = np.unique(pair_list, return_counts=True)  # find unique ID's and their amount
+
+    pair_unique = list(pair_unique)
+    pair_counts = list(pair_counts)
+
+    for pair in pair_unique:
+        if pair_counts[pair_unique.index(pair)]==1: to_remove.append(pair)
+
+    new_data = []
+    for entry in data:
+        if (entry.split(",")[1] +","+ entry.split(",")[2]) in to_remove: continue
+        new_data.append(entry)
+    return new_data
+
+def remove_outliers2(data):  # function to remove outliers from the data
     source_ip = []
     dest_ip = []
     common_list = []
@@ -27,7 +51,7 @@ def remove_outliers(data):  # function to remove outliers from the data
     # num_of_rows_to_print=10
     # print("csv file data:\n",text[:num_of_rows_to_print],flush=True, file=sys.stdout)
 
-    for entry in data.split("\n"):  # extracting data to list of sources and destinations inorder
+    for entry in data:  # extracting data to list of sources and destinations inorder
         source_ip.append(int(entry.split(",")[1]))
         dest_ip.append(int(entry.split(",")[2]))
 
@@ -62,23 +86,39 @@ def remove_outliers(data):  # function to remove outliers from the data
     # to_remove.append(dest_unique[dest_counts.index(id)])
 
     new_data = []
-    for entry in data.split("\n"):
+    for entry in data:
         if int(entry.split(",")[1]) in to_remove: continue
         if int(entry.split(",")[2]) in to_remove: continue
         new_data.append(entry)
     return new_data
 
-
-def get_Complexity(data,traceName,windowSize,method):  # the function receive data and compute the temporal and nontemporal complexities
+def get_Complexity(data,traceName,windowSize,method,filter1,filter2):  # the function receive data and compute the temporal and nontemporal complexities
     env = json.load(open("enviroment.config.json", "r"))
     r = redis.Redis(host=env["host"], password=env["redisPass"], port=env["redisPort"], db=0)
-    r.publish(str(traceName), "removing outliers")
-    data = remove_outliers(data)
+    r.publish(str(traceName), "Importing trace")
+    time.sleep(1)
+    data=data_parser(data)
+    if(filter1=="yes"):
+        r.publish(str(traceName), "Keeping only requests that appears more than once")
+        data = remove_outliers(data)
+        time.sleep(1) #need to improve pubsub
+    if (filter2=="yes"):
+        r.publish(str(traceName), "Keeping only nodes that appears both as source and destination")
+        data = remove_outliers2(data)
+        time.sleep(1) #need to improve pubsub
+
+    if(data==[]):
+        print("all data was filered",flush=True,file=sys.stdout)
+        raise ValueError("all data was filered")
+
     num_of_rows_to_print = 10
     # print("csv file data without outliers:\n",data[:num_of_rows_to_print],flush=True, file=sys.stdout)
     originalTrace = []
     rowShuffledTrace = []
     index = 0
+
+    r.publish(str(traceName), "creating original trace")
+    time.sleep(1) #need to improve pubsub
 
     try:
         for entry in data:  # extracting data to list of sources and destinations inorder
@@ -87,18 +127,24 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
             originalTrace.append(int(entry.split(",")[2]))
     except:
         print("error at csv.file in line:")
-        print(index)
+        print(index,flush=True,file=sys.stdout)
 
     # print("originalTrace data:\n",originalTrace[:num_of_rows_to_print],flush=True, file=sys.stdout)
+
+    r.publish(str(traceName), "creating rowshuffeled trace")
+    time.sleep(1) #need to improve pubsub
 
     for entry in data:  # extracting the data to list of lists, each list represent row
         rowShuffledTrace.append([int(entry.split(",")[1]), int(entry.split(",")[2])])
     random.shuffle(rowShuffledTrace)  # shuffling rows to perform a uniform random permutation of the rows
+    
     rowShuffledTrace = list(np.concatenate(rowShuffledTrace))  # turning the list of lists to a list
     # print("rowShuffledTrace data:\n",rowShuffledTrace[:num_of_rows_to_print],flush=True, file=sys.stdout)
 
-    r.publish(str(traceName), "creating randomized traces")
+    r.publish(str(traceName), "creating random trace")
+    time.sleep(1) #need to improve pubsub
     (unique, counts) = np.unique(originalTrace, return_counts=True)  # find unique ID's and their amount
+    uniqueNodes= len(unique)
     # print(unique)
     randomShuffeledTrace = []
     random.seed()
@@ -107,6 +153,7 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
     # print("randomShuffledTrace data:\n",randomShuffeledTrace[:num_of_rows_to_print],flush=True, file=sys.stdout)
 
     r.publish(str(traceName), "creating hash mapping")
+    time.sleep(1) #need to improve pubsub
     sha512_list = []
     m = int(2 * np.ceil(np.log2(
         len(unique))))  # computing paramter m for the amount of least significant bit's to take from the hash on the unique id's
@@ -127,7 +174,8 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
         mapping.write(str(str(unique[i]) + ",\"" + str(format(sha512_list[i], 'b').zfill(number_of_bits)) + "\"\n"))
     mapping.close()
     '''
-    r.publish(str(traceName), "saving randomtrace in memory")
+    r.publish(str(traceName), "standarizing random trace")
+    time.sleep(1) #need to improve pubsub
 
     # Replacing each of the original IDs in the trace with the new hashed IDs-standardized traces
     replaced_trace_binary,residue=bin.stringToBinary(format(sha512_list[list(unique).index(randomShuffeledTrace[0])], 'b').zfill(number_of_bits))
@@ -140,15 +188,12 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
 
         index = index + 1
         if (index % int(len(randomShuffeledTrace) / 10) == 0):
-            r.publish(str(traceName), "saving randomtrace in memory")
+            r.publish(str(traceName), "standarizing random trace")
         #print_list.append(sha512_list[list(unique).index(i)])
     # print(replaced_trace)
 
    # print("uncompressed randomtrace: (not in binary) \n", print_list[:num_of_rows_to_print], flush=True,
           #file=sys.stdout)
-
-    file = open("uncompressed_randomtrace.b",
-                "wb")  # creating binary file in write mode to save the trace for the compression
 
     '''
     print("int_array_list: \n", int_array_list[:num_of_rows_to_print], flush=True, file=sys.stdout)
@@ -158,10 +203,17 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
           file=sys.stdout)
     '''
     replaced_trace_binary[-1]=(replaced_trace_binary[-1]<<residue)
+
+    r.publish(str(traceName), "saving random trace in memory")
+    time.sleep(1) #need to improve pubsub
+
+    file = open("uncompressed_randomtrace.b",
+                "wb")  # creating binary file in write mode to save the trace for the compression
     file.write(replaced_trace_binary)
     file.close()
 
-    r.publish(str(traceName), "saving rowshuffledtrace in memory")
+    r.publish(str(traceName), "standarizing rowshuffledtrace")
+    time.sleep(1) #need to improve pubsub
 
     replaced_trace_binary,residue=bin.stringToBinary(format(sha512_list[list(unique).index(rowShuffledTrace[0])], 'b').zfill(number_of_bits))
     #print_list = []
@@ -173,14 +225,11 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
 
         index = index + 1
         if (index % int(len(rowShuffledTrace) / 10) == 0):
-            r.publish(str(traceName), "saving rowshuffledtrace in memory")
+            r.publish(str(traceName), "standarizing rowshuffledtrace")
     # print(replaced_trace)
 
     #print("uncompressed rowShuffledtrace: (not in binary) \n", print_list[:num_of_rows_to_print], flush=True,
           #file=sys.stdout)
-
-    file = open("uncompressed_rowshuffledtrace.b",
-                "wb")  # creating binary file in write mode to save the trace for the compression
 
     '''
     print("int_array_list: \n", int_array_list[:num_of_rows_to_print], flush=True, file=sys.stdout)
@@ -189,10 +238,16 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
     print("uncompressed rowshuffledtrace: (binary) \n", bytearray(int_array_list)[:num_of_rows_to_print], flush=True,
           file=sys.stdout)
     '''
+    r.publish(str(traceName), "saving rowshuffledtrace in memory")
+    time.sleep(1) #need to improve pubsub
+
+    file = open("uncompressed_rowshuffledtrace.b",
+                "wb")  # creating binary file in write mode to save the trace for the compression
     file.write(replaced_trace_binary)
     file.close()
 
-    r.publish(str(traceName), "saving originaltrace in memory")
+    r.publish(str(traceName), "standarizing originaltrace")
+    time.sleep(1) #need to improve pubsub
 
     replaced_trace_binary, residue = bin.stringToBinary(format(sha512_list[list(unique).index(originalTrace[0])], 'b').zfill(number_of_bits))
     #print_list = []
@@ -204,15 +259,12 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
 
         index=index+1
         if(index% int(len(originalTrace)/ 10) ==0):
-            r.publish(str(traceName), "saving originaltrace in memory")
+            r.publish(str(traceName), "standarizing originaltrace")
 
     # print(replaced_trace)
 
     #print("uncompressed originaltrace: (not in binary) \n", print_list[:num_of_rows_to_print], flush=True,
           #file=sys.stdout)
-
-    file = open("uncompressed_originaltrace.b",
-                "wb")  # creating binary file in write mode to save the trace for the compression
 
     '''
     print("int_array_list: \n", int_array_list[:num_of_rows_to_print], flush=True, file=sys.stdout)
@@ -221,10 +273,15 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
     print("uncompressed originaltrace: (binary) \n", bytearray(int_array_list)[:num_of_rows_to_print], flush=True,
           file=sys.stdout)
     '''
+    r.publish(str(traceName), "saving originaltrace in memory")
+    time.sleep(1) #need to improve pubsub
+
+    file = open("uncompressed_originaltrace.b",
+                "wb")  # creating binary file in write mode to save the trace for the compression
     file.write(replaced_trace_binary)
     file.close()
 
-    r.publish(str(traceName), "compressing all traces")
+    #r.publish(str(traceName), "compressing all traces")
     start_time = datetime.now()  # checking time for compressions
 
     if(method=="default"): method=""
@@ -232,18 +289,29 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
     if(windowSize=="default"): windowSize=""
     else: windowSize="-md="+windowSize
 
+    r.publish(str(traceName), "compressing originaltrace")
+    time.sleep(1) #need to improve pubsub
+
     subprocess.run(
         ["7za", "a", "-tzip", method, windowSize, "compressed_originaltrace.b", "uncompressed_originaltrace.b"],
         stdout=subprocess.PIPE, universal_newlines=True)  # using subprocess to compress the file with 7zip
 
     print("time for subprocess of compression original trace=", datetime.now() - start_time, flush=True,
           file=sys.stdout)
+
+    r.publish(str(traceName), "compressing rowshuffledtrace")
+    time.sleep(1) #need to improve pubsub
+
     subprocess.run(["7za", "a", "-tzip", method, windowSize, "compressed_rowshuffledtrace.b",
                     "uncompressed_rowshuffledtrace.b"], stdout=subprocess.PIPE,
                    universal_newlines=True)  # using subprocess to compress the file with 7zip
 
     print("time for subprocess of compression rowshuffled trace=", datetime.now() - start_time, flush=True,
           file=sys.stdout)
+
+    r.publish(str(traceName), "compressing randomtrace")
+    time.sleep(1) #need to improve pubsub
+
     subprocess.run(
         ["7za", "a", "-tzip", method, windowSize, "compressed_randomtrace.b", "uncompressed_randomtrace.b"],
         stdout=subprocess.PIPE, universal_newlines=True)  # using subprocess to compress the file with 7zip
@@ -266,6 +334,6 @@ def get_Complexity(data,traceName,windowSize,method):  # the function receive da
     print(Temporal_Trace_Complexity, Non_Temporal_Trace_Complexity, flush=True, file=sys.stdout)
     if Non_Temporal_Trace_Complexity > 1: Non_Temporal_Trace_Complexity = 1  # dealing with inputs that LZ doesn't compress well
 
-    r.publish(str(traceName), "finished")
+    #r.publish(str(traceName), "finished")
 
-    return Temporal_Trace_Complexity, Non_Temporal_Trace_Complexity
+    return Temporal_Trace_Complexity, Non_Temporal_Trace_Complexity, uniqueNodes

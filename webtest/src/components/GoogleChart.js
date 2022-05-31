@@ -9,6 +9,7 @@ import infoPoint from "./images/buttons_for_point_operations_in_map.png";
 import infoTable from "./images/buttons_for_db_table_operations_in_the_website_for_the_map.png";
 import { Button } from "react-bootstrap";
 import * as env from "../env/enviroment.config.json";
+import axios from "axios";
 //import SortIcon from "@material-ui/icons/ArrowDownward" //sortIcon={<SortIcon/>}
 
 const columns = [
@@ -107,12 +108,14 @@ class GoogleChart extends React.Component {
     this.exportExcel=this.exportExcel.bind(this);
     this.exportImage=this.exportImage.bind(this);
     this.exportMap=this.exportMap.bind(this);
+    this.clearMap=this.clearMap.bind(this);
     this.Wrapper=null;
     this.FirstTime = true;
     this.windowSize="default"; 
     this.compressionMethod="default";
     this.selected=null;
     this.RowsSelection = [];
+    this.toggledClearRows=this.state={toggledClearRows:false};
     this.data=[
        ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
        [null,0,0,null,0],
@@ -127,6 +130,8 @@ class GoogleChart extends React.Component {
         sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
     }
     this.queryData = [];//{"Trace":"bal","Temporal":4,"Nontemporal":5,"Color":"#0000FF"},{"Trace":"bhj","Temporal":9,"Nontemporal":6,"Color":"#FF0000"}];
+
+    this.get_Points();
 }  
 
 //'Compression,WindowSize' methods
@@ -385,6 +390,34 @@ guideOnMap(){
     );
   }
 
+  clearMap(){
+
+    this.colorarr = ['#0000FF'];
+    this.Namearr=[];
+    this.togglearr=[];
+    this.runningIndex=0;
+
+    this.FirstTime = true;
+
+    this.data=[
+      ['Name', 'Temporal', 'NonTemporal', 'Name', 'Size'],
+      [null,0,0,null,0],
+     ];
+
+     this.options = {
+      title:'',
+      hAxis: { title: 'Temporal' ,minValue: 0, maxValue: 1},
+      vAxis: { title: 'NonTemporal',titleTextStyle: {color:"#000000",fontName: 'Arial'} ,minValue: 0, maxValue: 1 },
+      chartArea: {left: 150, top: 10},
+      bubble: { textStyle: { fontSize: 11 } },
+      colors: this.colorarr,
+      //sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
+  
+    }
+
+    this.setState({chartData:this.data});
+  }
+
 openDialog(){ 
   this.color='#0000FF';
   var point=this.getPointFromDBQuery(this.Namearr[this.selected[0].row]);
@@ -458,13 +491,13 @@ openDialog(){
 }
 
 async get_Points(){
-  await fetch(env.DB)
+  await fetch(env.getPoints)
   //.then(response => { response.text();})
   //.then(text => {console.log(text);});
   .then(response => {return response.json();})
   .then(responseData => { this.queryData = responseData.map((i) => ({"Trace":i[0],"Temporal":parseFloat(i[1].toString()).toFixed(3),"Nontemporal":parseFloat(i[2].toString()).toFixed(3),"Pairfilter":i[3],"Nodefilter":i[4],"CompressionMethod":i[5],"WindowSize":i[6],"TraceSize":parseInt(i[7]),"TraceNodes":parseInt(i[8])})); return responseData;}) //{Trace:"bal",Temporal:4,Nontemporal:5}
   .catch(err => {alert(err.toString() + " could not receive points,maybe database is down");});
-  this.setState({data:this.queryData});
+  this.setState({data:this.queryData,toggledClearRows:false});
   //alert(JSON.stringify(this.queryData));
 }
 
@@ -503,7 +536,8 @@ RemovePoint(name) {
   this.options = {
     title:'',
     hAxis: { title: 'Temporal' ,minValue: 0, maxValue: 1},
-    vAxis: { title: 'NonTemporal' ,minValue: 0, maxValue: 1 },
+    vAxis: { title: 'NonTemporal',titleTextStyle: {color:"#000000",fontName: 'Arial'} ,minValue: 0, maxValue: 1 },
+    chartArea: {left: 150, top: 10},
     bubble: { textStyle: { fontSize: 11 } },
     colors: this.colorarr,
     //sizeAxis: {minValue: this.minsize,  maxSize: this.maxsize},
@@ -511,6 +545,24 @@ RemovePoint(name) {
   }
   this.setState({chartData:this.data});
 }     
+
+async handleRemoveFromDB(){
+  for(var i=0;i<this.RowsSelection.length;i++)
+  {
+    await axios.post(env.deletePoint,JSON.stringify({"trace":this.RowsSelection[i]["Trace"]}))
+    .catch(err => {alert(err.toString() + " could not delete point,maybe database is down");});
+    this.RemovePoint(this.RowsSelection[i]["Trace"]);
+    //alert(JSON.stringify(this.queryData));
+  }
+  this.setState({toggledClearRows:true});
+  this.get_Points();
+}
+
+/*
+const handleDeselectAll = () => {
+  dispatch({ type: 'deselectAllRows' });
+}
+*/
 
 handleRemoveFromMap(){
   for(var i=0;i<this.RowsSelection.length;i++)
@@ -524,6 +576,7 @@ return(
     <div>
         <div id="chart">
           <button className='btn' onClick={() => this.exportMap()}>Export Map</button>
+          <button className='btn' onClick={() => this.clearMap()}>Clear Map</button>
           <Chart
   width={'750px'}
   height={'600px'}
@@ -553,11 +606,12 @@ return(
 />
       </div>
       <div id="datatable">
-      <button className='btn' onClick={() => this.get_Points()}>Get Points</button>
+      <button className='btn' onClick={() => {this.setState({toggledClearRows:true});this.get_Points();}}>REFRESH TRACES</button>
+      <button className='btn' onClick={() => this.handleRemoveFromDB()}>REMOVE FROM DB</button>
       <button className='btn' onClick={() => this.handleAddFromTable()}>ADD TO MAP</button>
       <button className='btn' onClick={() => this.handleRemoveFromMap()}>REMOVE FROM MAP</button>
       <button className="btn_circle" onClick={() => this.guideOnTable()}>?</button>
-      <DataTable title="Points From DB" columns={columns} data={this.queryData} defaultSirtFieldID={1} pagination selectableRows onSelectedRowsChange={({ selectedRows }) => {this.RowsSelection=selectedRows;}}/> 
+      <DataTable title="Points From DB" columns={columns} data={this.queryData} defaultSirtFieldID={1} pagination selectableRows onSelectedRowsChange={({ selectedRows }) => {this.RowsSelection=selectedRows;}}  clearSelectedRows={this.state.toggledClearRows}/> 
       </div> 
       <div id="html-dist"></div>
     </div>

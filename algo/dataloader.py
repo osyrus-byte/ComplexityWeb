@@ -6,6 +6,8 @@ import json
 import time
 from minio import Minio
 
+#{"bucketName":this.RowsSelection[0]["name"].replaceAll('_','-'),"objectNumber":10,"traceName":this.RowsSelection[0]["name"],"traceSize":this.RowsSelection[0]["size"],"filter1":this.pairFilter,"filter2":this.nodeFilter,"windowSize":this.windowSize,"compressionMethod":this.compressionMethod}
+
 def upload(req):
     env=json.load(open("enviroment.config.json","r"))
     try:
@@ -17,7 +19,7 @@ def upload(req):
 
     try:
         cursor.execute(
-            "CREATE TABLE traces (trace VARCHAR (255) PRIMARY KEY, temporal real,nontemporal real,color VARCHAR (255),compression VARCHAR (255),windowsize VARCHAR (255));")
+            "CREATE TABLE traces (trace VARCHAR (255) PRIMARY KEY, temporal real,nontemporal real,pairfilter VARCHAR (255),nodefilter VARCHAR (255),compression VARCHAR (255),windowsize VARCHAR (255),tracesize integer,tracenodes integer);")
         connection.commit()
     except Exception as error:
         print("Error while creating table", error, flush=True)
@@ -42,11 +44,11 @@ def upload(req):
         res.release_conn()
 
     print("Starting algorithms, trace=",req["traceName"],flush=True)
-    Temporal_Trace_Complexity,Non_Temporal_Trace_Complexity = algo.get_Complexity(data,req["traceName"],req["windowSize"],req["compressionMethod"])
+    Temporal_Trace_Complexity,Non_Temporal_Trace_Complexity,uniqueNodes = algo.get_Complexity(data,req["traceName"],req["windowSize"],req["compressionMethod"],req["filter1"],req["filter2"])
 
     full_trace_name=req["traceName"] + "." + req["compressionMethod"] + "." + req["windowSize"]
 
-    cmd = "INSERT INTO traces (trace,temporal,nontemporal,color,compression,windowsize) VALUES (\'" + full_trace_name +"\'," + str(Temporal_Trace_Complexity) +","+str(Non_Temporal_Trace_Complexity)+","+"\'" + req["color"] +"\'"+ ","+"\'" + req["compressionMethod"] +"\'"+","+"\'" + req["windowSize"] +"\'"+");"
+    cmd = "INSERT INTO traces (trace,temporal,nontemporal,pairfilter,nodefilter,compression,windowsize,tracesize,tracenodes) VALUES (\'" + full_trace_name +"\'," + str(Temporal_Trace_Complexity) +","+str(Non_Temporal_Trace_Complexity)+","+"\'" + req["filter1"] +"\'"+ ","+"\'" + req["filter2"] +"\'"+ "," + "\'"+ req["compressionMethod"] +"\'"+","+"\'" + req["windowSize"] +"\'"+","+str(req["traceSize"])+","+str(uniqueNodes)+");"
     cursor.execute(cmd)
     connection.commit()
 
