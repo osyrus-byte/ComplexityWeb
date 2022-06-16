@@ -1,7 +1,0 @@
-{
-	"host" : "132.72.107.212",
-	"webSocketPort" : 8080,
-	"redisURL" : "redis://oy12se@132.72.107.212:6379/0",
-	"redisPort" : 6379,
-	"redisPass" : "oy12se"
-}
