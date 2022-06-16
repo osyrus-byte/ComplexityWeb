@@ -1,0 +1,12 @@
+{
+    "backendHost" : "ec2-18-118-19-224.us-east-2.compute.amazonaws.com",
+    "algoURL" : "http://ec2-18-118-19-224.us-east-2.compute.amazonaws.com:3500/data_upload",
+    "algoPercentage" : 2.70,
+    "getPoints" : "http://ec2-18-118-19-224.us-east-2.compute.amazonaws.com:3500/mysql_getpoints",
+    "deletePoint" : "http://ec2-18-118-19-224.us-east-2.compute.amazonaws.com:3500/mysql_deletepoint",
+    "webSocket" : "ws://ec2-18-118-19-224.us-east-2.compute.amazonaws.com:8080/echo",
+    "pubSub" : "http://ec2-18-118-19-224.us-east-2.compute.amazonaws.com:8080/setchannel",
+    "minioPort" : 9000,
+    "minioUser" : "osyrus",
+    "minioPass" : "oyso2128"
+}

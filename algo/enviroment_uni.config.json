@@ -1,0 +1,16 @@
+{
+	"host" : "132.72.107.212",
+	"appHost" : "0.0.0.0",
+	"algoPort" : 3500,
+	"mysqlPort" : 3306,
+	"mysqlPass" : "oy2812",
+	"mysqlDB" : "oysql",
+	"postgresqlUser" : "postgres",
+	"postgresqlPass" : "Yesod221228",
+	"postgreaqlPort" : "5432",
+	"minioURL" : "132.72.107.212:9000",
+	"minioUser" : "osyrus",
+    	"minioPass" : "oyso2128",
+	"redisPort" : 6379,
+	"redisPass" : "oy12se"
+}

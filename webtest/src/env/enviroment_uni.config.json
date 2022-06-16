@@ -1,0 +1,12 @@
+{
+    "backendHost" : "132.72.107.212",
+    "algoURL" : "http://132.72.107.212:3500/data_upload",
+    "algoPercentage" : 2.70,
+    "getPoints" : "http://132.72.107.212:3500/mysql_getpoints",
+    "deletePoint" : "http://132.72.107.212:3500/mysql_deletepoint",
+    "webSocket" : "ws://132.72.107.212:8080/echo",
+    "pubSub" : "http://132.72.107.212:8080/setchannel",
+    "minioPort" : 9000,
+    "minioUser" : "osyrus",
+    "minioPass" : "oyso2128"
+}
