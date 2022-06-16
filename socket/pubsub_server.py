@@ -7,7 +7,7 @@ from flask_cors import CORS, cross_origin
 from flask_sockets import Sockets
 import sys
 
-env = json.load(open("enviroment.config.json", "r"))
+env = json.load(open("environment.config.json", "r"))
 
 redis_url = env["redisURL"]
 

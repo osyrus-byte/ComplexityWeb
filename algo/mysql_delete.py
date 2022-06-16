@@ -3,7 +3,7 @@ import json
 import sys
 
 def delete_point(trace_to_delete):
-  env = json.load(open("enviroment.config.json", "r"))
+  env = json.load(open("environment.config.json", "r"))
   try:
     connection=pymysql.connect(host=env["host"],port=env["mysqlPort"],user="root",passwd=env["mysqlPass"],db=env["mysqlDB"])
     cursor=connection.cursor()

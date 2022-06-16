@@ -93,7 +93,7 @@ def remove_outliers2(data):  # function to remove outliers from the data
     return new_data
 
 def get_Complexity(data,traceName,windowSize,method,filter1,filter2):  # the function receive data and compute the temporal and nontemporal complexities
-    env = json.load(open("enviroment.config.json", "r"))
+    env = json.load(open("environment.config.json", "r"))
     r = redis.Redis(host=env["host"], password=env["redisPass"], port=env["redisPort"], db=0)
     r.publish(str(traceName), "Importing trace")
     time.sleep(1)

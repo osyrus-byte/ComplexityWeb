@@ -4,7 +4,7 @@ import * as Minio from "minio";
 import DataTable from "react-data-table-component";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { w3cwebsocket as W3CWebSocket } from "websocket";
-import * as env from "../env/enviroment.config.json";
+import * as env from "../env/environment.config.json";
 import {Text} from "react-native";
 
 
@@ -60,6 +60,7 @@ const columns = [
         this.RowsSelection = [];
         this.toggledClearRows=this.state={toggledClearRows:false};
         this.progressPrecentage=[0,0,0,0,0];
+        this.waitMessage="";
         this.progressState=0;
         this.status=["","","","",""];
         this.isbold=[{},{},{},{},{}];
@@ -165,6 +166,9 @@ const columns = [
                                         this.progressState=0;
                                         this.isbold[4]={};
                                         client.close();
+                                        this.waitMessage="";
+                                        this.setState({});
+                                        (async ()=> {await new Promise(r => setTimeout(r, 1000));  alert("Finished Calculating the Complexity and saving it to DB, You can view the new Complexity at the Complexity Map tab");})();
                                     }
                                     break;
                                 default:
@@ -196,6 +200,7 @@ const columns = [
         }
         const out=JSON.stringify({"bucketName":this.RowsSelection[0]["name"].replaceAll('_','-'),"objectNumber":10,"traceName":this.RowsSelection[0]["name"],"traceSize":this.RowsSelection[0]["size"],"filter1":this.pairFilter,"filter2":this.nodeFilter,"windowSize":this.windowSize,"compressionMethod":this.compressionMethod});
         axios.post(env.algoURL,out);
+        this.waitMessage="The Calculation will take several minutes";
     } 
 
     async removeBuckets(){
@@ -271,6 +276,7 @@ const columns = [
             <Text style={this.isbold[4]}>{"5.Compress each trace using the same parameters using an LZ algorithm: ("+this.status[4].toString()+") "+parseInt(Math.ceil(this.progressPrecentage[4])).toString()+"%"}</Text>
             <LinearProgress variant="determinate" value={parseInt(Math.ceil(this.progressPrecentage[4]))} />
             </div>
+            <a>{this.waitMessage}</a>
         </div>
         )
     }

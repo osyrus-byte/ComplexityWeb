@@ -1,7 +1,7 @@
 import React from "react";
 import * as Minio from "minio";
 import LinearProgress from "@material-ui/core/LinearProgress";
-import * as env from "../env/enviroment.config.json";
+import * as env from "../env/environment.config.json";
 
 class FileLoader extends React.Component {
     constructor(props) {

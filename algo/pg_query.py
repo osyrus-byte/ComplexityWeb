@@ -1,7 +1,7 @@
 import psycopg2
 import json
 def get_points():
-    env = json.load(open("enviroment.config.json", "r"))
+    env = json.load(open("environment.config.json", "r"))
     try:
         connection = psycopg2.connect(user=env["postgresqlUser"],
                                       password=env["postgresqlPass"],

@@ -8,7 +8,7 @@ import infoMap from "./images/button_to_save_a_point_to_the_map.png";
 import infoPoint from "./images/buttons_for_point_operations_in_map.png";
 import infoTable from "./images/buttons_for_db_table_operations_in_the_website_for_the_map.png";
 import { Button } from "react-bootstrap";
-import * as env from "../env/enviroment.config.json";
+import * as env from "../env/environment.config.json";
 import axios from "axios";
 //import SortIcon from "@material-ui/icons/ArrowDownward" //sortIcon={<SortIcon/>}
 

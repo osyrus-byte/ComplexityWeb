@@ -9,7 +9,7 @@ from minio import Minio
 #{"bucketName":this.RowsSelection[0]["name"].replaceAll('_','-'),"objectNumber":10,"traceName":this.RowsSelection[0]["name"],"traceSize":this.RowsSelection[0]["size"],"filter1":this.pairFilter,"filter2":this.nodeFilter,"windowSize":this.windowSize,"compressionMethod":this.compressionMethod}
 
 def upload(req):
-    env=json.load(open("enviroment.config.json","r"))
+    env=json.load(open("environment.config.json","r"))
     try:
         connection = pymysql.connect(host=env["host"], port=env["mysqlPort"], user="root",
                                      passwd=env["mysqlPass"], db=env["mysqlDB"])

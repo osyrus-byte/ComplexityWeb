@@ -8,7 +8,7 @@ import mysql_query
 import mysql_delete
 import dataloader
 
-env = json.load(open("enviroment.config.json", 'r'))
+env = json.load(open("environment.config.json", 'r'))
 
 app = flask.Flask(__name__)
 cors = CORS(app, resources={r"/getpoints": {"origins" : "*"}})
