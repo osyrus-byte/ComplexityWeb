@@ -166,6 +166,7 @@ const columns = [
                                         this.progressState=0;
                                         this.isbold[4]={};
                                         client.close();
+                                        
                                         this.waitMessage="";
                                         this.setState({});
                                         (async ()=> {await new Promise(r => setTimeout(r, 1000));  alert("Finished Calculating the Complexity and saving it to DB, You can view the new Complexity at the Complexity Map tab");})();
