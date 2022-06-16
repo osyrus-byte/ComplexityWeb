@@ -38,12 +38,16 @@ const columns = [
         this.nodeFilter="no";
         this.windowSize="default"; 
         this.compressionMethod="default"; 
+
         this.onPairFilterChange=this.onPairFilterChange.bind(this);
         this.onNodeFilterChange=this.onNodeFilterChange.bind(this);
         this.calculateComplexity=this.calculateComplexity.bind(this);
+        this.removeBuckets=this.removeBuckets.bind(this);
+
         this.onWindowSizeChange=this.onWindowSizeChange.bind(this);
         this.onCompressionMethodChange=this.onCompressionMethodChange.bind(this);
         this.webSocketListener=this.webSocketListener.bind(this);
+
         this.minioClient = new Minio.Client({
             endPoint: env.backendHost,
             port: env.minioPort,
@@ -51,8 +55,10 @@ const columns = [
             accessKey: env.minioUser,
             secretKey: env.minioPass
         });
+
         this.bucketlist=[];
         this.RowsSelection = [];
+        this.toggledClearRows=this.state={toggledClearRows:false};
         this.progressPrecentage=[0,0,0,0,0];
         this.progressState=0;
         this.status=["","","","",""];
@@ -189,14 +195,29 @@ const columns = [
             return;
         }
         const out=JSON.stringify({"bucketName":this.RowsSelection[0]["name"].replaceAll('_','-'),"objectNumber":10,"traceName":this.RowsSelection[0]["name"],"traceSize":this.RowsSelection[0]["size"],"filter1":this.pairFilter,"filter2":this.nodeFilter,"windowSize":this.windowSize,"compressionMethod":this.compressionMethod});
-        axios.post("http://ec2-18-118-19-224.us-east-2.compute.amazonaws.com:3500/data_upload",out);
+        axios.post(env.algoURL,out);
     } 
 
+    async removeBuckets(){
+        for(var i=0;i<this.RowsSelection.length;i++)
+        {
+            for(let counter=0;counter<10;counter++)
+                await this.minioClient.removeObject(this.RowsSelection[i]["name"].replaceAll('_','-'), counter.toString());
+            await this.minioClient.removeBucket(this.RowsSelection[i]["name"].replaceAll('_','-')); 
+        }
+
+        this.setState({toggledClearRows:true});
+
+        this.bucketlist=[];
+
+        this.minioClient.listBuckets().then(
+            (data)=>{data.map((i)=>(async ()=> {await this.sumObject(i.name).then((resolve)=>{this.bucketlist=this.bucketlist.concat({"name":i.name,"creationDate":i.creationDate.toString(),"size":resolve});this.setState({selectedFile: null,toggledClearRows:false});})})());this.setState({selectedFile: null,toggledClearRows:false});});
+    }
 
     render = () => {
         return (<div>
             <div id='bucket'> 
-            <DataTable title="Files Uploaded" columns={columns} data={this.bucketlist} defaultSirtFieldID={1} pagination selectableRows onSelectedRowsChange={({ selectedRows }) => {this.RowsSelection=selectedRows;}}/> 
+            <DataTable title="Files Uploaded" columns={columns} data={this.bucketlist} defaultSirtFieldID={1} pagination selectableRows onSelectedRowsChange={({ selectedRows }) => {this.RowsSelection=selectedRows;}}  clearSelectedRows={this.state.toggledClearRows}/> 
             </div>
             <div id='calculate'>
             <label> Compression Method:</label>
@@ -228,6 +249,7 @@ const columns = [
             </select>
             <br/>
             <button className='btn' onClick={() => this.calculateComplexity()}>Calculate Complexity Parameters</button>
+            <button className='btn' onClick={() => this.removeBuckets()}>Remove Buckets</button>
             </div>
             <div id='progress'>
             <Text style={this.isbold[0]}>{"1.Import trace and get trace parameters: ("+this.status[0].toString()+") "+parseInt(Math.ceil(this.progressPrecentage[0])).toString()+"%"}</Text>
